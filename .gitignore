@@ -1,0 +1,7 @@
+backups/
+logs/
+*.log
+*.vhdx
+*.tar
+*.sha256
+meta.json
