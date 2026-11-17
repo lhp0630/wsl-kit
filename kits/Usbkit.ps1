@@ -1,19 +1,19 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  WSL2 VHDX portable kit: Move / Import / Eject / Backup / Status
+  WSLkit USB module: Move / Import / Eject / Backup / Status
 
 .DESCRIPTION
-  Single-script workflow to migrate a WSL2 distro VHDX to a USB (or any) directory,
-  re-register it after insert, and safely stop before eject. Optional cold backup
-  before Move and Eject.
+  Migrate a WSL2 distro VHDX to a USB (or any) directory, re-register after insert,
+  and safely stop before eject. Optional cold backup before Move and Eject.
+  Prefer the unified entry: .\WslKit.ps1 Usb <Command> ...
 
 .EXAMPLE
-  .\WslUsb.ps1 Move -Distro Ubuntu -Root E:\WSL\Ubuntu -Backup -Confirm
+  .\WslKit.ps1 Usb Move -Distro Ubuntu -Root E:\WSL\Ubuntu -Backup -Confirm
 .EXAMPLE
-  .\WslUsb.ps1 Import -Root E:\WSL\Ubuntu -Start
+  .\Usbkit.ps1 Import -Root E:\WSL\Ubuntu -Start
 .EXAMPLE
-  .\WslUsb.ps1 Eject -Root E:\WSL\Ubuntu -Backup
+  .\WslKit.ps1 Usb Eject -Root E:\WSL\Ubuntu -Backup
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
@@ -72,13 +72,13 @@ function Set-LogTarget {
     param([string]$PreferredRoot)
     $stamp = Get-Date -Format 'yyyyMMdd'
     if ($PreferredRoot -and (Test-Path -LiteralPath $PreferredRoot)) {
-        $Script:LogPath = Join-Path $PreferredRoot "logs\wsl-usb-$stamp.log"
+        $Script:LogPath = Join-Path $PreferredRoot "logs\wslkit-usb-$stamp.log"
     } else {
-        $tmp = Join-Path $env:TEMP 'WslUsb'
+        $tmp = Join-Path $env:TEMP 'WslKit'
         if (-not (Test-Path -LiteralPath $tmp)) {
             New-Item -ItemType Directory -Path $tmp -Force | Out-Null
         }
-        $Script:LogPath = Join-Path $tmp "wsl-usb-$stamp.log"
+        $Script:LogPath = Join-Path $tmp "wslkit-usb-$stamp.log"
     }
 }
 
@@ -448,15 +448,18 @@ function Invoke-SmokeTest {
 
 function Show-Help {
     @"
-WslUsb.ps1 — WSL2 VHDX portable kit (single script)
+Usbkit.ps1 — WSLkit USB module (VHDX portable on USB / directory)
 
-USAGE
-  .\WslUsb.ps1 Move   -Distro <name> -Root <path> [-UsbLabel <label>] [-Backup] [-DefaultUser <user>] [-Confirm]
-  .\WslUsb.ps1 Import -Root <path> [-Name <name>] [-DefaultUser <user>] [-Start] [-UsbLabel <label>]
-  .\WslUsb.ps1 Eject  -Root <path> [-Backup] [-Unregister] [-UsbLabel <label>]
-  .\WslUsb.ps1 Backup -Distro <name> -BackupDir <path>   (or -Root for <Root>\backups)
-  .\WslUsb.ps1 Status -Root <path>
-  .\WslUsb.ps1 Help
+USAGE (via unified entry)
+  .\WslKit.ps1 Usb Move   -Distro <name> -Root <path> [-UsbLabel <label>] [-Backup] [-DefaultUser <user>] [-Confirm]
+  .\WslKit.ps1 Usb Import -Root <path> [-Name <name>] [-DefaultUser <user>] [-Start] [-UsbLabel <label>]
+  .\WslKit.ps1 Usb Eject  -Root <path> [-Backup] [-Unregister] [-UsbLabel <label>]
+  .\WslKit.ps1 Usb Backup -Distro <name> -BackupDir <path>   (or -Root for <Root>\backups)
+  .\WslKit.ps1 Usb Status -Root <path>
+  .\WslKit.ps1 Usb Help
+
+USAGE (direct)
+  .\Usbkit.ps1 <Command> ...
 
 EXIT CODES
   0 success | 1 generic | 2 prereq | 3 backup failed | 4 migrate/import failed | 5 cancelled
@@ -465,6 +468,7 @@ NOTES
   - Prefer NTFS USB / USB3 SSD. Always eject via this script before unplugging.
   - Eject does NOT unregister by default (unregister can delete the VHDX).
   - Move prefers: wsl --manage --move ; falls back to export VHDX + import.
+  - GitHub ZIP downloads: Unblock-File .\Usbkit.ps1  (RemoteSigned + Mark of the Web)
 "@ | Write-Host
 }
 
