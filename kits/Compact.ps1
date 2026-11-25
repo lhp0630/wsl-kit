@@ -1,13 +1,13 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  WSLkit Compact module — compact WSL2 VHDX (PLANNED).
+  WSLkit Compact 模块 — 压缩 WSL2 VHDX（规划中）。
 
 .DESCRIPTION
-  Planned flow (see docs/design/compact_vdisk.md):
-    1. Resolve VHDX path from LXSS registry (DistributionName / BasePath)
+  规划流程（见 docs/design/compact_vdisk.md）：
+    1. 从 LXSS 注册表解析 VHDX 路径（DistributionName / BasePath）
     2. wsl --shutdown
-    3. diskpart: select vdisk + compact vdisk (silent, show progress)
+    3. diskpart：select vdisk + compact vdisk（无弹窗，显示进度）
 
 .EXAMPLE
   .\WslKit.ps1 Compact -Distro Ubuntu
@@ -25,28 +25,28 @@ Set-StrictMode -Version Latest
 
 function Show-Help {
     @"
-Compact — WSL2 VHDX compact  [PLANNED]
+Compact — 压缩 WSL2 VHDX  [规划中]
 
-STATUS
-  Not implemented yet. Design notes: docs/compact_vdisk.md
+状态
+  尚未实现。设计说明：docs/compact_vdisk.md
 
-PLANNED USAGE
-  .\WslKit.ps1 Compact -Distro <name>
-  .\WslKit.ps1 Compact Run -Distro <name>
+规划用法
+  .\WslKit.ps1 Compact -Distro <名称>
+  .\WslKit.ps1 Compact Run -Distro <名称>
 
-PLANNED STEPS
-  1. Locate VHDX via HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss
-  2. Accept renamed vhdx (not only ext4.vhdx / file.vhdx)
+规划步骤
+  1. 经 HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss 定位 VHDX
+  2. 接受已重命名的 vhdx（不仅限 ext4.vhdx / file.vhdx）
   3. wsl --shutdown
-  4. diskpart compact vdisk (no UI popup; show progress)
+  4. diskpart compact vdisk（无 UI 弹窗；显示进度）
 "@ | Write-Host
 }
 
 switch ($Command) {
     'Help' { Show-Help; exit 0 }
     'Run' {
-        Write-Host '[PLANNED] Compact is not implemented yet. See docs/compact_vdisk.md' -ForegroundColor Yellow
-        if ($Distro) { Write-Host "Requested distro: $Distro" }
+        Write-Host '[规划中] Compact 尚未实现。详见 docs/compact_vdisk.md' -ForegroundColor Yellow
+        if ($Distro) { Write-Host "请求的发行版: $Distro" }
         exit 2
     }
 }

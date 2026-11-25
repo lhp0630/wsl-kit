@@ -1,54 +1,43 @@
-# Compact — VHDX 压缩
+# Compact
 
 > 状态：**规划中**（`.\WslKit.ps1 Compact` 目前仅打印说明）。
 
-压缩 WSL2 发行版虚拟磁盘，回收已删除文件占用的稀疏空间。
+压缩 WSL2 发行版虚拟磁盘，回收稀疏空间。
 
-入口：
+## 命令
 
 ```powershell
-.\WslKit.ps1 Compact -Distro <name>
+.\WslKit.ps1 Compact Help
 .\WslKit.ps1 Compact Run -Distro <name>
 ```
 
----
+| 选项 | 必需 | 默认 | 说明 |
+|------|------|------|------|
+| `-Distro` | Run 时建议 | — | 发行版名 |
 
-## 规划中的用法
+## 关键语义
+
+从 LXSS 注册表解析 `BasePath` 下的 VHDX（兼容重命名），停机后用 `diskpart` 执行 `compact vdisk`（静默、显示进度）。
+
+## 工作流程（规划）
+
+1. 定位 VHDX（`HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss`）。
+2. `wsl --shutdown`。
+3. `diskpart`：`select vdisk` → `compact vdisk`。
+
+## 示例
 
 ```powershell
-# 查看说明
 .\WslKit.ps1 Compact Help
-
-# 压缩指定发行版（实现后）
 .\WslKit.ps1 Compact Run -Distro Ubuntu
 ```
 
----
-
-## 规划步骤
-
-### 1. 查找 VHDX 位置
-
-```powershell
-Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss\*" |
-  Select-Object DistributionName, BasePath |
-  Format-Table -AutoSize
-```
-
-WSL 默认文件名常为 `ext4.vhdx` / `file.vhdx`，需兼容被重命名的校验。
-
-### 2. 压缩
-
-1. `wsl --shutdown`
-2. 启动 `diskpart`（静默、无弹窗）
-3. `select vdisk file="path\to\file.vhdx"`
-4. `compact vdisk`
-5. 在控制台显示压缩进度
-
----
-
 ## 安全要点（规划）
 
-- 压缩前必须停干净 WSL，避免损坏虚拟盘。
-- 操作前建议先用 Usb 模块做一次 `-Backup`。
-- 勿在发行版 Running 时直接 compact。
+- 压缩前必须停干净 WSL。
+- 建议先用 Portable 模块做冷备份。
+
+## 相关代码 / 设计
+
+- 占位：[`kits/Compact.ps1`](../kits/Compact.ps1)
+- 设计草稿：[`docs/design/compact_vdisk.md`](design/compact_vdisk.md)

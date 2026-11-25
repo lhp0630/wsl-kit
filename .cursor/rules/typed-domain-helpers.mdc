@@ -1,0 +1,48 @@
+---
+description: Prefer concrete types and domain-named pure helpers over transitional duck-typing
+alwaysApply: true
+---
+
+# Typed domain helpers (not migration-shaped helpers)
+
+When unpacking a known SDK/vendor result or classifying a known error family, write the **stable** helper first—not a private, duck-typed stopgap that mirrors an old call path.
+
+## Why stopgaps appear
+
+Agents often keep `object` + `getattr` and names like `_raw_*` / `_mapped_*` because a *previous* design had two shapes (e.g. adapter output vs vendor object), or tests used loose fakes. After the dual path is gone, that scaffolding is leftover migration dialect—not a good API.
+
+## Do
+
+- **Type the contract**: parameter is the concrete vendor/model type (or a narrow Protocol you own), not `object`.
+- **Read fields directly** once the type is known; reserve `getattr` for truly open/unknown payloads.
+- **Name from the domain result** (`execution_streams`, `trim_policy`), not from the migration story (`_raw_streams`, `fix_unpack`).
+- **Public pure helper** in the shared utility module when the transform is reusable and I/O-free; feature modules *call* it.
+- **Colocate tests** with the helper; name cases after invariant clauses (happy path / error note / leave-alone).
+
+## Don't
+
+- Keep `object` + `getattr` “for fakes” after the production type is fixed—tighten fakes or construct real models in tests.
+- Leave underscore-private copies in a feature file when the same pure logic belongs next to sibling helpers.
+- Encode layering drama in the name (`raw`/`mapped`/`compat`) once only one shape remains.
+
+## Exemplar shape (abstract — no repo symbols)
+
+```text
+# ❌ Transitional: untyped, getattr, migration-named, buried in the feature module
+def _raw_unpack(result: object) -> tuple[str, str, int | None]:
+    return getattr(result, "out", ""), getattr(result, "err", ""), getattr(result, "code", None)
+
+# ✅ Stable: concrete type, direct fields, domain name, shared helper module
+def result_streams(result: VendorResult) -> tuple[str, str, int | None]:
+    return result.out, result.err, result.code
+```
+
+## Prompt stub
+
+```text
+Extract pure unpack/classify for <vendor type>.
+Name from domain result; type the parameter; no getattr unless open payload.
+Place in <shared helper module>; feature code only calls it.
+Drop _raw_/_mapped_ naming if a single shape remains.
+Tests: one name per clause + fakes that satisfy the real type (or build the model).
+```

@@ -1,0 +1,67 @@
+---
+description: Match pydantic_ai_harness Capability / Toolset / Backend docstring voice
+alwaysApply: true
+---
+
+# Harness docstring voice (Capability / Toolset / Backend)
+
+Match upstream `pydantic_ai_harness` public docs
+([harness docs](https://ai.pydantic.dev/harness/)) — not generic Google/Numpy
+filler. Companion to `pydantic-ai-capabilities.mdc` (structure + model prompts).
+Upstream may be absent from the env; still follow published voice when writing
+Capability / Toolset / Backend docs in this repo.
+
+## Shape by surface
+
+| Surface | Opening | Body | Params |
+|---|---|---|---|
+| **Capability** | What the model/host gains in one sentence | Ownership split (capability vs injected host); attach/fail conditions; explicit non-goals (not a security boundary, no default stdin, …); short usage example OK | Dataclass **field docs** right under each field |
+| **Backend** | Verb-first: where/how it runs (`Run commands in…`) + protocol link | Image/host prerequisites; create-on-first-use vs attach-`ref`; who destroys; what construction does *not* do (no I/O); typed errors | Class-level **`Args:`** (constructor is the API) |
+| **Toolset** | One tight sentence: which tools, bound to what | Extra paragraph only for cross-run / truncation / workspace routing | Usually none — wiring, not host API |
+| **Tool method** | One-line purpose | When to call; what the result means (incl. decline/timeout) | `Args:` with **bounds** (counts, uniqueness, allowed values) |
+| **Module** | One line naming the unit | Backend modules may add “verified against SDK/CLI …” notes for behavior the code relies on | — |
+
+## Voice
+
+- Present tense; host API in second person (`pass`, `call`, `you supply`).
+- Backtick symbols; mkdocstrings links for cross-types:
+  `` [`WorkspaceUnavailableError`][pydantic_ai.workspaces.WorkspaceUnavailableError] ``.
+- Pack related facts with semicolons; put **concrete examples** in Args
+  (`such as \`['--memory', '2g']\``).
+- Document **boundaries**: `None` / default meaning, mutual exclusion
+  (`pass image or ref, not both`), layering (`per-call env goes on top`),
+  deliberate non-actions (`never removes the container`).
+- Field / Args text explains **role + constraint + interaction**, not the type.
+
+```python
+# ✅ Backend / Capability Args (harness accent)
+working_dir: The absolute directory in the container where commands start and
+    relative paths resolve; created on first use if missing. `None` uses the
+    image's own (`WORKDIR`, or `/`).
+allow_internet_access: Whether a new container gets outbound network access,
+    including this machine's local network; `False` runs it with `--network none`.
+
+# ❌ Restate the signature / vague filler
+working_dir: Optional string path for the working directory.
+allow_internet_access: Boolean to enable network access.
+```
+
+```python
+# ✅ Capability field doc — semantics of None + host contract
+answerer: Answerer | None
+"""Presents each `AskUserRequest` to the user and returns their `AskUserResponse`.
+
+`None` defers every call: the run ends with `DeferredToolRequests` output…
+"""
+
+# ✅ Toolset — registration only
+class AskUserToolset(FunctionToolset[AgentDepsT]):
+    """Registers `ask_user_question` bound to one answerer, or deferring every call when there is none."""
+```
+
+## Do not
+
+- Open with “This class represents / is a helper for…”.
+- Restate types, mirror every method, or narrate implementation steps in the class doc.
+- Put request/runtime checks in prose that belongs only in code.
+- Inflate Toolset docs to match Backend length — keep Toolset short.

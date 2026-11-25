@@ -1,26 +1,24 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  WSLkit — unified entry for WSL tooling modules.
+  WSLkit — WSL 工具套件统一入口。
 
 .DESCRIPTION
-  Dispatches to kit modules:
-    Usb      — VHDX portable on USB / directory (Usbkit.ps1)
-    Compact  — VHDX compact (planned)
-    Install  — WSL + openEuler install (planned)
-    Devkit   — in-distro tool bootstrap (planned)
+  按模块调度：
+    Portable — 便携发行版（方案 B：导出 / 本机导入 / 弹出）
+    Compact  — 压缩 VHDX（规划中）
+    Install  — 安装 WSL + openEuler（规划中）
+    Devkit   — 发行版内工具预装（规划中）
 
 .EXAMPLE
   .\WslKit.ps1 Help
 .EXAMPLE
-  .\WslKit.ps1 Usb Move -Distro Ubuntu -Root E:\WSL\Ubuntu -Backup -Confirm
-.EXAMPLE
-  .\WslKit.ps1 Compact -Distro Ubuntu
+  .\WslKit.ps1 Portable Move -Distro Ubuntu -Root E:\WSLkit -Backup -Confirm
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('Usb', 'Compact', 'Install', 'Devkit', 'Help')]
+    [ValidateSet('Portable', 'Usb', 'Compact', 'Install', 'Devkit', 'Help')]
     [string]$Kit = 'Help',
 
     [Parameter(ValueFromRemainingArguments = $true)]
@@ -30,34 +28,41 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# 兼容旧模块名 Usb → Portable
+if ($Kit -eq 'Usb') {
+    Write-Warning '模块名 Usb 已更名为 Portable，请改用: .\WslKit.ps1 Portable ...'
+    $Kit = 'Portable'
+}
+
 function Show-WslKitHelp {
     @"
-WSLkit — toolkit for Windows Subsystem for Linux
+WSLkit — Windows Subsystem for Linux 工具套件
 
-TLDR: .\WslKit.ps1 Usb Help
+快速查看：.\WslKit.ps1 Portable Help
 
-MODULES
-  Usb       VHDX portable kit (Move / Import / Eject / Backup / Status)  [ready]
-  Compact   Compact WSL2 VHDX via diskpart                               [planned]
-  Install   Install WSL runtime + openEuler distro                       [planned]
-  Devkit    Bootstrap zsh / brew / docker / uv / git / ... in distro     [planned]
+模块
+  Portable  便携方案 B：Move / Import / Eject / Backup / Status     [可用]
+  Compact   压缩 WSL2 VHDX（diskpart）                              [规划中]
+  Install   安装 WSL 运行时与 openEuler 发行版                        [规划中]
+  Devkit    发行版内预装 zsh / brew / docker / uv / git 等             [规划中]
 
-USAGE
-  .\WslKit.ps1 <Module> [module-args...]
+用法
+  .\WslKit.ps1 <模块> [模块参数...]
   .\WslKit.ps1 Help
 
-EXAMPLES
-  .\WslKit.ps1 Usb Move -Distro Ubuntu -Root E:\WSL\Ubuntu -Backup -Confirm
-  .\WslKit.ps1 Usb Import -Root E:\WSL\Ubuntu -Start
-  .\WslKit.ps1 Usb Eject -Root E:\WSL\Ubuntu -Backup
+示例
+  .\WslKit.ps1 Portable Move -Distro Ubuntu -Root E:\WSLkit -Backup -Confirm
+  .\WslKit.ps1 Portable Import -Root E:\WSLkit -Start
+  .\WslKit.ps1 Portable Eject -Root E:\WSLkit -Confirm
   .\WslKit.ps1 Compact -Distro Ubuntu
   .\WslKit.ps1 Install
   .\WslKit.ps1 Devkit -Prepare
 
-NOTES
-  Run on Windows PowerShell 5.1+ / PowerShell 7+, not inside a Linux shell.
-  If RemoteSigned blocks a GitHub ZIP extract: Unblock-File .\WslKit.ps1
-  Or: powershell -ExecutionPolicy Bypass -File .\WslKit.ps1 Help
+说明
+  Portable 遵循 RFC-ARCH-001 方案 B（介质上存放导出物，本机磁盘运行）。
+  请在 Windows PowerShell 5.1+ / PowerShell 7+ 中运行，不要在 Linux shell 内执行入口脚本。
+  若 GitHub ZIP 解压后被 RemoteSigned 拦截：Unblock-File .\WslKit.ps1
+  或：powershell -ExecutionPolicy Bypass -File .\WslKit.ps1 Help
 "@ | Write-Host
 }
 
@@ -69,10 +74,10 @@ switch ($Kit) {
         Show-WslKitHelp
         exit 0
     }
-    'Usb' {
-        $script = Join-Path $root 'kits\Usbkit.ps1'
+    'Portable' {
+        $script = Join-Path $root 'kits\Portable.ps1'
         if (-not (Test-Path -LiteralPath $script)) {
-            Write-Error "Missing module script: $script"
+            Write-Error "缺少模块脚本: $script"
             exit 1
         }
         if ($null -eq $KitArgs -or $KitArgs.Count -eq 0) {
