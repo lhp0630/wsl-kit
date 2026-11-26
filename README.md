@@ -12,7 +12,7 @@
 
 ## Features
 
-- **Portable（可用，方案 B）：** Move / Import / Eject / Backup / Status — 介质保存 export 产物；日常在本机磁盘运行；Eject 注销本机副本并默认 re-export 回介质（[`RFC-ARCH-001`](RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md)）。
+- **Portable（可用）：** Move / Import / Eject / Backup / Status — 介质保存 `export` 产物；日常在本机磁盘 `import` 运行；Eject 注销本机副本并默认 re-export 回介质（[`RFC-ARCH-001`](RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md)）。
 - **Compact（规划）：** 压缩 WSL2 VHDX。
 - **Install（规划）：** 安装 WSL 运行时与 openEuler 等发行版。
 - **Devkit（规划）：** 发行版内工具预装（二进制优先，支持 Prepare 离线包）。
@@ -34,7 +34,7 @@
 .\WslKit.ps1 Portable Help
 ```
 
-Portable（方案 B）最短路径：
+Portable 最短路径：
 
 ```powershell
 .\WslKit.ps1 Portable Move -Distro Ubuntu -Root E:\WSLkit -Backup -Confirm
@@ -44,9 +44,9 @@ Portable（方案 B）最短路径：
 
 ## How It Works
 
-**方案 B（默认）：** 可移动介质上存放冷导出（`.vhdx` / `.tar`）；插入后 `wsl --import` 到本机路径（默认 `%USERPROFILE%\WSLkit\<Name>`）；使用期间 VHDX 在本机磁盘；拔出前将改动写回介质（可跳过）并 `unregister` **本机**登记，介质上的导出物保留。
+**当前默认（`export` / `import`）：** 可移动介质上存放冷导出（`.vhdx` / `.tar`）；插入后 `wsl --import` 到本机路径（默认 `%USERPROFILE%\WSLkit\<Name>`）；使用期间 VHDX 在本机磁盘；拔出前将改动写回介质（可跳过）并 `unregister` **本机**登记，介质上的导出物保留。
 
-驻留介质 + `import-in-place`（方案 A）为 **第二阶段远期可选**，当前未实现。
+**远期可选（`import-in-place`）：** 虚拟盘文件直接驻留在介质上，用 `wsl --import-in-place` 登记后就地运行。当前未实现。
 
 各规划模块由 `WslKit.ps1` 调度到 `kits\` 占位脚本；实现前设计笔记在 `docs/design\`。
 
@@ -73,11 +73,11 @@ Portable（方案 B）最短路径：
 ## Safety and Limitations
 
 - 导出前会停干净 WSL。
-- `wsl --unregister` 会删除该发行版**本机 InstallLocation** 下的虚拟盘；方案 B 要求 HostPath 不在介质 Root 下，避免误删介质金样。
+- `wsl --unregister` 会删除该发行版**本机 InstallLocation** 下的虚拟盘；因此 Import 的 HostPath **不得**落在介质 Root 下，避免误删介质上的导出金样。
 - 导出物含用户数据与密钥；请加密可移动盘。
 - Import 按镜像体积可能耗时较长；日常 I/O 受益于本机磁盘。
 - Compact / Install / Devkit 尚未实现。
-- 不保证劣质 USB 闪存盘上的 export/import 体验。
+- 不保证劣质 USB 闪存盘上的 export/import 耐久。
 
 ## Documentation
 

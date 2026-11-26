@@ -1,10 +1,10 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  WSLkit Portable 模块（方案 B）：Move / Import / Eject / Backup / Status
+  WSLkit Portable 模块：Move / Import / Eject / Backup / Status
 
 .DESCRIPTION
-  将发行版导出到可移动介质，导入到本机路径日常使用，弹出前注销本机副本（介质保留导出物）。
+  将发行版 export 到可移动介质，再 wsl --import 到本机路径日常使用；弹出前注销本机副本（介质保留导出物）。
   RFC-ARCH-001。推荐：.\WslKit.ps1 Portable <Command> ...
 
 .EXAMPLE
@@ -445,7 +445,7 @@ function Invoke-SmokeTest {
 
 function Show-Help {
     @"
-Portable.ps1 — WSLkit 便携模块（方案 B：导出到介质 / 本机导入）
+Portable.ps1 — WSLkit 便携模块（export 到介质 / import 到本机）
 
 用法
   .\WslKit.ps1 Portable Move    -Distro <名称> -Root <介质目录> [-Backup] [-Name <名称>] [-DefaultUser <用户>] [-Confirm]
@@ -455,12 +455,12 @@ Portable.ps1 — WSLkit 便携模块（方案 B：导出到介质 / 本机导入
   .\WslKit.ps1 Portable Status  -Root <介质目录>
   .\WslKit.ps1 Portable Help
 
-方案 B 说明
-  Move/Migrate  导出到介质，然后注销【源机】发行版
+当前模式（export / import）
+  Move/Migrate  wsl --export 到介质，然后注销【源机】发行版
   Import        wsl --import 到 %USERPROFILE%\WSLkit\<名称>（本机副本）
-  Eject         默认将本机状态写回介质（可用 -SkipReExport 跳过），注销【本机】副本后弹出
+  Eject         默认将本机状态 re-export 回介质（可用 -SkipReExport 跳过），注销【本机】副本后弹出
 
-第二阶段（未实现）：介质驻留 VHDX / import-in-place
+远期可选（未实现）：介质驻留 VHDX + wsl --import-in-place
 
 退出码
   0 成功 | 1 通用错误 | 2 前置失败 | 3 备份/导出失败 | 4 迁移/导入失败 | 5 用户取消
@@ -604,7 +604,7 @@ function Invoke-CommandImport {
     }
     $meta = Read-Meta $root
     if ($meta -and $meta.lifecycle -and [string]$meta.lifecycle -ne $Script:Lifecycle) {
-        Write-Log WARN "meta.lifecycle=$($meta.lifecycle); expected $Script:Lifecycle (Model B)."
+        Write-Log WARN "meta.lifecycle=$($meta.lifecycle); expected $Script:Lifecycle (export-import)."
     }
 
     $wslName = if ($Name) { $Name } elseif ($meta -and $meta.wslName) { [string]$meta.wslName } else { 'Ubuntu' }
@@ -639,11 +639,11 @@ function Invoke-CommandImport {
         throw 'USER_CANCELLED'
     }
 
-    # Safety: never import-in-place onto media for Model B default
+    # Safety: export/import keeps InstallLocation off the media Root
     $artFull = [System.IO.Path]::GetFullPath($artifact)
     $hostFull = [System.IO.Path]::GetFullPath($hostPath)
     if ($hostFull.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
-        Write-Log ERROR 'Host install path must not be under media Root (Model B copies to host disk).'
+        Write-Log ERROR 'Host install path must not be under media Root (export/import copies to host disk).'
         $Script:ExitCode = 4
         throw 'HOST_PATH_ON_MEDIA'
     }

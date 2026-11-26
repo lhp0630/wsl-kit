@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   按模块调度：
-    Portable — 便携发行版（方案 B：导出 / 本机导入 / 弹出）
+    Portable — 便携发行版（export 到介质 / import 到本机 / 弹出）
     Compact  — 压缩 VHDX（规划中）
     Install  — 安装 WSL + openEuler（规划中）
     Devkit   — 发行版内工具预装（规划中）
@@ -41,7 +41,7 @@ WSLkit — Windows Subsystem for Linux 工具套件
 快速查看：.\WslKit.ps1 Portable Help
 
 模块
-  Portable  便携方案 B：Move / Import / Eject / Backup / Status     [可用]
+  Portable  便携：Move / Import / Eject / Backup / Status（export/import） [可用]
   Compact   压缩 WSL2 VHDX（diskpart）                              [规划中]
   Install   安装 WSL 运行时与 openEuler 发行版                        [规划中]
   Devkit    发行版内预装 zsh / brew / docker / uv / git 等             [规划中]
@@ -59,7 +59,8 @@ WSLkit — Windows Subsystem for Linux 工具套件
   .\WslKit.ps1 Devkit -Prepare
 
 说明
-  Portable 遵循 RFC-ARCH-001 方案 B（介质上存放导出物，本机磁盘运行）。
+  Portable：介质存 export 产物，本机 wsl --import 运行；远期可选 import-in-place（未实现）。
+  详见 docs/portable.md 与 RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md。
   请在 Windows PowerShell 5.1+ / PowerShell 7+ 中运行，不要在 Linux shell 内执行入口脚本。
   若 GitHub ZIP 解压后被 RemoteSigned 拦截：Unblock-File .\WslKit.ps1
   或：powershell -ExecutionPolicy Bypass -File .\WslKit.ps1 Help

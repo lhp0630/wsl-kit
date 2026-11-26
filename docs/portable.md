@@ -1,14 +1,20 @@
 # Portable
 
-将 WSL2 发行版以 **方案 B（export-import）** 方式带到可移动介质，并在 Windows 主机上使用：
+将 WSL2 发行版以 **`export` / `import`** 方式带到可移动介质，并在 Windows 主机上使用：
 
 1. **Move** — 导出到介质，然后注销**源机**发行版  
-2. **Import** — 从介质 `import` 到**本机** InstallLocation（默认 `%USERPROFILE%\WSLkit\<Name>`）  
+2. **Import** — 从介质 `wsl --import` 到**本机** InstallLocation（默认 `%USERPROFILE%\WSLkit\<Name>`）  
 3. **Eject** — 将本机改动 re-export 回介质（可用 `-SkipReExport` 跳过），注销**本机**副本，再弹出介质  
 
 实现：[`kits/Portable.ps1`](../kits/Portable.ps1)。规范：[`RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md`](../RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md)。
 
-> **第二阶段（远期，未实现）：** 介质上 VHDX 驻留 + `import-in-place`。首版不提供。  
+### 两种登记模式
+
+| 模式 | 做法 | 状态 |
+|------|------|------|
+| **`export` / `import`（当前默认）** | 介质只存冷导出；本机另有一份 InstallLocation；Eject 注销本机副本，介质金样保留 | 已实现 |
+| **`import-in-place`（远期）** | VHDX 驻留介质，就地登记运行 | 未实现 |
+
 > 旧模块名 `Usb` / `Usbkit.ps1` / `docs/usb.md` 已更名为 **Portable**；`.\WslKit.ps1 Usb …` 仍可调用但会警告。
 
 入口：
@@ -51,8 +57,8 @@
 
 | 概念 | 含义 |
 |------|------|
-| 介质 Root | 存放 `meta.json`、`distros\<Name>.vhdx|tar`、`backups\`、`logs\` |
-| lifecycle | `export-import`（方案 B） |
+| 介质 Root | 存放 `meta.json`、`distros\<Name>.vhdx\|tar`、`backups\`、`logs\` |
+| lifecycle | `export-import`（对应默认的 export / import 流程） |
 | hostInstallPath | Import 后本机 InstallLocation；Eject unregister 只针对本机副本 |
 | defaultUser | 迁出前写入 meta；Import 后写 `/etc/wsl.conf`，`-Start` 可带 `-u` |
 
@@ -129,9 +135,9 @@
 ## 安全要点
 
 - 任何导出前会 `wsl --shutdown`。  
-- **unregister 只应对本机 InstallLocation**；方案 B 禁止把 HostPath 设在介质 Root 下。  
+- **unregister 只应对本机 InstallLocation**；HostPath 禁止设在介质 Root 下，以免误删介质导出物。  
 - 导出物含密钥与家目录；介质建议 **NTFS + BitLocker**，优先 USB3 固态盘。  
-- 从旧「驻留 Root」用法迁移：先对旧环境做一次 Move/export 到新布局，或等待第二阶段。  
+- 从旧「介质驻留 VHDX」用法迁移：先对旧环境做一次 Move/`export` 到新布局，或等待 `import-in-place` 模式。  
 - ZIP + `RemoteSigned`：`Unblock-File .\WslKit.ps1`、`Unblock-File .\kits\*.ps1`。
 
 ---
