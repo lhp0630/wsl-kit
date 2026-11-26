@@ -1,30 +1,29 @@
-# WSLkit
+# WslKit
 
-面向 [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/windows/wsl/) 的工具套件：把 Linux 发行版带到可移动磁盘，并在可用 WSL2 的 Windows 主机之间切换使用。
+面向 [Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/windows/wsl/) 的工具套件。
 
 统一入口：[WslKit.ps1](WslKit.ps1)。
 
-## Why WSLkit?
+## Why WslKit?
 
-- **跨机迁移：** 在多台可用 WSL2 的 Windows 之间带走同一套已配置的 Linux 环境（包、点文件、SSH 密钥等）。
-- **本机 SSD 运行：** Portable 默认 `export` / `import`——介质只存冷导出，日常 VHDX 在本机磁盘，避免移动盘 I/O 限制。
-- **自动管生命周期：** 脚本固化导出、导入、备份、注销与默认用户恢复，减少手写 `wsl` 时误 `unregister` 毁掉唯一副本。
+- 在多台 Windows 之间带走同一套 Wsl Linux。
+- 自动生命周期管理，导出、导入、备份、注销与默认用户恢复，减少毁掉镜像的可能性。
 - 在单一入口下扩展压缩磁盘、安装发行版、预装开发工具等能力（部分仍为规划中）。
 
-手写 `import-in-place` 往往更简单，但运行期绑在移动盘上且注销更危险；默认模式的取舍见 [docs/portable.md](docs/portable.md)。
+Portable 默认 `export`/`import`，手写 `import-in-place` 往往更简单，但运行期绑在移动盘上且注销更危险；两种模式的取舍见 [docs/portable.md](docs/portable.md)。
 
 ## Features
 
-- **Portable（可用）：** Move / Import / Eject / Backup / Status — 介质保存 `export` 产物；日常在本机磁盘 `import` 运行；Eject 注销本机副本并默认 re-export 回介质（[`RFC-ARCH-001`](RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md)）。价值与 `import-in-place` 对比见 [docs/portable.md](docs/portable.md)。
-- **Compact（规划）：** 压缩 WSL2 VHDX。
-- **Install（规划）：** 安装 WSL 运行时与 openEuler 等发行版。
-- **Devkit（规划）：** 发行版内工具预装（二进制优先，支持 Prepare 离线包）。
+- **Portable：** Move / Import / Eject / Backup / Status — 介质保存导出产物；日常在本机磁盘导入运行；Eject 注销本机副本并默认 ReExport 回介质。
+- **Compact：** 压缩 WSL2 VHDX（规划）。
+- **Install：** 安装 WSL 运行时与 openEuler 等发行版（规划）。
+- **Devkit：** 发行版内工具预装，支持 Prepare 离线包（规划）。
 
 ## Requirements
 
-- Windows 10/11，**WSL2** 可用（`wsl.exe`）。
-- **Windows** PowerShell 5.1+ 或 PowerShell 7+（不要在 Linux shell 里跑入口脚本）。
-- 可移动介质建议 **NTFS**；跨机带走时建议 BitLocker；优先 USB3 固态移动盘。
+- Windows 10/11，WSL2 可用。
+- Windows PowerShell 5.1+ 或 PowerShell 7+。
+- 可移动介质建议 NTFS；跨机带走时建议 BitLocker；优先 USB3 固态移动盘。
 
 ## Quick Start
 
