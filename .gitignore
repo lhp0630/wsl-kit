@@ -5,3 +5,5 @@ logs/
 *.tar
 *.sha256
 meta.json
+
+.cursor/
