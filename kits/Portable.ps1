@@ -460,7 +460,11 @@ Portable.ps1 — WSLkit 便携模块（export 到介质 / import 到本机）
   Import        wsl --import 到 %USERPROFILE%\WSLkit\<名称>（本机副本）
   Eject         默认将本机状态 re-export 回介质（可用 -SkipReExport 跳过），注销【本机】副本后弹出
 
-远期可选（未实现）：介质驻留 VHDX + wsl --import-in-place
+为何默认 export/import（相对 import-in-place）
+  - 多机迁移：介质是冷导出，每台主机各自本机副本
+  - 本机 SSD 运行：避开移动盘 I/O；unregister 只删本机副本，不误伤介质金样
+  - 自动管理：导出 / 导入 / 备份 / 注销 / 默认用户恢复
+  代价：Import/Eject 写回更耗时。import-in-place 更简单但绑移动盘（远期可选，未实现）
 
 退出码
   0 成功 | 1 通用错误 | 2 前置失败 | 3 备份/导出失败 | 4 迁移/导入失败 | 5 用户取消

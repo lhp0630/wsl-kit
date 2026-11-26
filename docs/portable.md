@@ -8,12 +8,32 @@
 
 实现：[`kits/Portable.ps1`](../kits/Portable.ps1)。规范：[`RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md`](../RFCs/RFC-ARCH-001-portable-vdisk-lifecycle.md)。
 
+### 为什么默认用 `export` / `import`
+
+手写 `wsl --import-in-place` 往往更省事（少一次全量拷贝），但默认模式换来的是更稳、更好用的跨机工作流：
+
+- **多机迁移：** 介质上是可携带的冷导出；每台 Windows 各自 `import` 出本机副本，换机语义清晰。
+- **本机 SSD 运行：** 日常读写在本机磁盘，避开移动盘 I/O 瓶颈与总线抖动。
+- **自动管生命周期：** Move / Import / Eject 代管导出、导入、可选备份、注销本机副本与默认用户恢复，降低误 `unregister` 毁掉唯一 VHDX 的风险。
+
+代价：每次 Import（以及 Eject 写回）按镜像体积更耗时。简单 ≠ 默认；默认优先稳和运行期性能。
+
 ### 两种登记模式
 
 | 模式 | 做法 | 状态 |
 |------|------|------|
 | **`export` / `import`（当前默认）** | 介质只存冷导出；本机另有一份 InstallLocation；Eject 注销本机副本，介质金样保留 | 已实现 |
 | **`import-in-place`（远期）** | VHDX 驻留介质，就地登记运行 | 未实现 |
+
+### 与 `import-in-place` 简单对比
+
+| | **`export` / `import`（默认）** | **`import-in-place`** |
+|--|--------------------------------|------------------------|
+| 日常跑的盘在哪 | 本机 InstallLocation（通常是 SSD） | 可移动介质上的同一份 VHDX |
+| 插上/换机成本 | 需 `import`（按体积可能数分钟） | 多为就地登记（更快） |
+| `wsl --unregister` | 删的是**本机副本**；介质导出物仍在 | 可能删掉介质上**唯一** live 盘（高危） |
+| 运行期 I/O | 本机盘，更稳更快 | 受移动盘与 USB 总线限制 |
+| 工具代管 | 导出 / 导入 / 备份 / 注销 / 用户恢复 | 手写命令时需自己保证纪律 |
 
 > 旧模块名 `Usb` / `Usbkit.ps1` / `docs/usb.md` 已更名为 **Portable**；`.\WslKit.ps1 Usb …` 仍可调用但会警告。
 

@@ -67,6 +67,85 @@ WSLkit — Windows Subsystem for Linux 工具套件
 "@ | Write-Host
 }
 
+# 数组 @('Import','-Root','D:\...') 溅射到 .ps1 时，'-Root' 会被当成位置参数而失败。
+# 将剩余参数解析为哈希表后再溅射。
+function Convert-RemainingArgsToSplat {
+    param([object[]]$Arguments)
+
+    $splat = @{}
+    if ($null -eq $Arguments -or @($Arguments).Count -eq 0) {
+        return $splat
+    }
+
+    $items = @($Arguments)
+    $i = 0
+
+    $first = [string]$items[0]
+    if ($first -notmatch '^-{1,2}[A-Za-z]') {
+        $splat['Command'] = $first
+        $i = 1
+    }
+
+    while ($i -lt $items.Count) {
+        $token = [string]$items[$i]
+        if ($token -notmatch '^-{1,2}([A-Za-z][\w]*)(?::(.*))?$') {
+            throw "Unexpected argument: $token"
+        }
+
+        $name = $Matches[1]
+        $inline = $Matches[2]
+
+        if ($null -ne $inline -and $inline -ne '') {
+            if ($inline -eq 'true' -or $inline -eq '$true') {
+                $splat[$name] = $true
+            } elseif ($inline -eq 'false' -or $inline -eq '$false') {
+                $splat[$name] = $false
+            } else {
+                $splat[$name] = $inline
+            }
+            $i++
+            continue
+        }
+
+        $next = $null
+        if ($i + 1 -lt $items.Count) {
+            $next = [string]$items[$i + 1]
+        }
+
+        if ($null -eq $next -or $next -match '^-{1,2}[A-Za-z]') {
+            $splat[$name] = $true
+            $i++
+        } else {
+            $splat[$name] = $items[$i + 1]
+            $i += 2
+        }
+    }
+
+    return $splat
+}
+
+function Invoke-KitScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptPath,
+
+        [object[]]$Arguments
+    )
+
+    if (-not (Test-Path -LiteralPath $ScriptPath)) {
+        Write-Error "缺少模块脚本: $ScriptPath"
+        exit 1
+    }
+
+    if ($null -eq $Arguments -or @($Arguments).Count -eq 0) {
+        & $ScriptPath 'Help'
+    } else {
+        $splat = Convert-RemainingArgsToSplat -Arguments $Arguments
+        & $ScriptPath @splat
+    }
+    exit $LASTEXITCODE
+}
+
 $root = $PSScriptRoot
 if (-not $root) { $root = Split-Path -Parent $MyInvocation.MyCommand.Path }
 
@@ -76,31 +155,15 @@ switch ($Kit) {
         exit 0
     }
     'Portable' {
-        $script = Join-Path $root 'kits\Portable.ps1'
-        if (-not (Test-Path -LiteralPath $script)) {
-            Write-Error "缺少模块脚本: $script"
-            exit 1
-        }
-        if ($null -eq $KitArgs -or $KitArgs.Count -eq 0) {
-            & $script 'Help'
-        } else {
-            & $script @KitArgs
-        }
-        exit $LASTEXITCODE
+        Invoke-KitScript -ScriptPath (Join-Path $root 'kits\Portable.ps1') -Arguments $KitArgs
     }
     'Compact' {
-        $script = Join-Path $root 'kits\Compact.ps1'
-        if ($null -eq $KitArgs -or $KitArgs.Count -eq 0) { & $script 'Help' } else { & $script @KitArgs }
-        exit $LASTEXITCODE
+        Invoke-KitScript -ScriptPath (Join-Path $root 'kits\Compact.ps1') -Arguments $KitArgs
     }
     'Install' {
-        $script = Join-Path $root 'kits\Install.ps1'
-        if ($null -eq $KitArgs -or $KitArgs.Count -eq 0) { & $script 'Help' } else { & $script @KitArgs }
-        exit $LASTEXITCODE
+        Invoke-KitScript -ScriptPath (Join-Path $root 'kits\Install.ps1') -Arguments $KitArgs
     }
     'Devkit' {
-        $script = Join-Path $root 'kits\Devkit.ps1'
-        if ($null -eq $KitArgs -or $KitArgs.Count -eq 0) { & $script 'Help' } else { & $script @KitArgs }
-        exit $LASTEXITCODE
+        Invoke-KitScript -ScriptPath (Join-Path $root 'kits\Devkit.ps1') -Arguments $KitArgs
     }
 }
